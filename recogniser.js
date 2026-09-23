@@ -678,6 +678,21 @@ function rdpWalk(pts, start, end, sqEps, keep) {
   }
 }
 
+/* --- wire-format helper (task 10) -------------------------------
+   Quantise a point list onto a small integer grid. The device
+   payload carries 16-bit coordinates on a 1000 x 1000 grid:
+   absolute, unnormalised, so a phone-side parser can measure
+   radial layers and angular sectors exactly as the tablet does. */
+const WIRE_GRID = 1000; // 16-bit coordinates, 0..1000
+function quantisePoints(points, origin, scale) {
+  const s = (scale > 0) ? WIRE_GRID / scale : 1;
+  return points.map(p => ({
+    x: Math.round((p.x - origin.x) * s),
+    y: Math.round((p.y - origin.y) * s),
+    t: Math.round(p.t || 0)
+  }));
+}
+
 // Squared distance from point p to the segment a→b.
 function sqDistToSegment(p, a, b) {
   const abx = b.x - a.x, aby = b.y - a.y;
@@ -704,7 +719,7 @@ if (typeof module !== "undefined" && module.exports) {
     fitCircleToStroke, fitCircleToPoints, ringAngularGapDeg,
     ringRoundness, testRingCandidate, detectRing, testRingGlyph,
     ringIsClosed, layerOf, sectorOf, intrinsicAngleDeg,
-    sigilAxisHeadingDeg, simplifyStrokeRDP,
+    sigilAxisHeadingDeg, simplifyStrokeRDP, quantisePoints,
     P_RESAMPLE_N, P_GREEDY_EPSILON, REJECT_DISTANCE, REJECT_MARGIN,
     RING_MAX_ROUNDNESS, RING_MAX_GAP_DEG, RING_MIN_RADIUS_PX,
     RING_CLOSED_GAP_DEG, SECTOR_NAMES
