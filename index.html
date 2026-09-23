@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1,
+      maximum-scale=1, user-scalable=no">
+<title>Glyph Lab</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ header: title + mode switch ============ -->
+<header id="topbar">
+  <h1>Glyph Lab</h1>
+  <select id="modeSelect" title="App mode">
+    <option value="draw">Draw</option>
+    <option value="teach">Teach</option>
+    <option value="bench">Bench</option>
+  </select>
+  <label id="palmWrap" title="Once a pen is seen, ignore touch input">
+    <input type="checkbox" id="palmToggle" checked> pen lock
+  </label>
+  <button id="helpBtn" class="ghost" title="What does this do?">?</button>
+</header>
+
+<!-- ============ the drawing canvas ============ -->
+<div id="canvasWrap">
+  <canvas id="ink"></canvas>
+  <div id="pageGuides" class="overlay hidden"></div>
+
+  <div id="badge" class="badge hidden"></div>
+  <div id="echoBox" class="echo hidden"></div>
+
+  <!-- debug panel, top-right on the canvas -->
+  <div id="debug" class="debug">
+    <div class="debug-row"><span id="dbgStrokes">0</span> strokes</div>
+    <div class="debug-row"><span id="dbgPoints">0</span> pts (last)</div>
+    <div class="debug-row"><span id="dbgGlyphs">0</span> glyphs</div>
+    <div class="debug-row"><span id="dbgTempl">0</span> templates</div>
+    <div class="debug-row"><span id="dbgUnknowns">0</span> unknowns</div>
+    <div class="debug-row dbg-actions">
+      <button id="btnParse" class="ghost tiny" title="Read the whole page as one expression">parse</button>
+      <button id="btnAst" class="ghost tiny" title="Show the parser's reading">ast</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ panels, one per mode ============ -->
+<section id="panel" class="panel">
+
+  <!-- DRAW -->
+  <div id="panel-draw" class="mode-panel">
+    <p class="hint">Draw ring + sigil + signs. Parse reads the whole page
+       as one expression; Clear starts a new page.</p>
+    <div class="btnrow">
+      <button id="btnClear">Clear page</button>
+      <button id="btnUndo" class="ghost">Undo last glyph</button>
+    </div>
+    <div id="glyphLog" class="glyphlog"></div>
+  </div>
+
+  <!-- TEACH -->
+  <div id="panel-teach" class="mode-panel hidden">
+    <p class="hint">Type a template name, draw a sample, it is saved
+       automatically. Templates below must match names used in
+       data/lexicon.json.</p>
+    <input id="teachName" type="text" placeholder="template name"
+           autocomplete="off" spellcheck="false">
+    <div class="btnrow">
+      <button id="btnTeachUndo" class="ghost">Undo last sample</button>
+    </div>
+    <div id="templateList" class="templatelist"></div>
+  </div>
+
+  <!-- BENCH -->
+  <div id="panel-bench" class="mode-panel hidden">
+    <p class="hint">Drill: the app names a glyph, you draw it from memory.
+       Leave-one-out: an instant accuracy reading from your saved samples.</p>
+    <div class="btnrow">
+      <label class="inline">reps per glyph
+        <input id="repsPerGlyph" type="number" min="1" max="50" value="10">
+      </label>
+      <button id="btnDrill">Start drill</button>
+      <button id="btnLoo">Leave-one-out</button>
+    </div>
+    <div id="benchStatus" class="benchstatus">no run yet</div>
+    <div id="benchResults" class="benchresults"></div>
+  </div>
+
+</section>
+
+<!-- ============ modal dialogs ============ -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div id="modalButtons" class="btnrow"></div>
+  </div>
+</div>
+
+<!-- pure modules first: they must not touch the page -->
+<script src="recogniser.js"></script>
+<script src="lexicon.js"></script>
+<script src="parser.js"></script>
+<script src="compiler.js"></script>
+<!-- the only file allowed to touch the page -->
+<script src="app.js"></script>
+</body>
+</html>

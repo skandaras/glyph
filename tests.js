@@ -71,9 +71,9 @@ console.log("sectors and intrinsic angles");
   check("frame 90: canvas -45 = NW", r.sectorOf(-45, 90) === "NW");
   check("frame 0: canvas 45 = SE", r.sectorOf(45, 0) === "SE");
   check("frame 0: canvas 180 = W", r.sectorOf(180, 0) === "W");
-  check("intrinsic: toward centre = 0", near(r.intrinsicAngleDeg(180, 0), 180) || near(r.intrinsicAngleDeg(0, 180), 180));
-  const outward = r.intrinsicAngleDeg(0, 180);
-  check("sign pointing outward reads 0", near(outward, 0, 1e-6) || near(Math.abs(outward), 180, 1e-6));
+  check("intrinsic: pointing at centre = 0", near(r.intrinsicAngleDeg(0, 180), 0));
+  check("intrinsic: pointing away = 180", near(r.intrinsicAngleDeg(180, 180), 180));
+  check("intrinsic: along the ring = ±90", near(Math.abs(r.intrinsicAngleDeg(90, 0)), 90));
 }
 
 console.log("$P recogniser invariants");

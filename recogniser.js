@@ -621,12 +621,15 @@ function sectorOf(angleDeg, frameOffsetDeg) {
 }
 
 // Intrinsic orientation of a candidate, expressed frame-free:
-// angle pointing at the ring centre = 0°, along the ring = ±90°.
-// axisDeg: the candidate's own principal axis.
-// centerToCandidateDeg: angle from ring centre to the
-// candidate's centroid (canvas convention, degrees).
+// 0° = pointing AT the ring centre, 180° = pointing away,
+// ±90° = sitting along the ring. axisDeg: the candidate's own
+// principal axis (start of drawing → end). centerToCandidateDeg:
+// angle from ring centre to the candidate's centroid (canvas
+// convention, degrees).
 function intrinsicAngleDeg(axisDeg, centerToCandidateDeg) {
-  return degNormalize(axisDeg - centerToCandidateDeg);
+  // +180 puts "toward the centre" at 0, matching the documented
+  // convention the lexicon notes describe.
+  return degNormalize(axisDeg - centerToCandidateDeg + 180);
 }
 
 // Heading of the sigil's own axis, as the frame's "north".
