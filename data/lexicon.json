@@ -1,0 +1,53 @@
+{
+  "lexiconVersion": 1,
+  "lexemes": {
+    "sigil.anchor": {
+      "name": "anchor",
+      "class": "sigil",
+      "templates": ["anchor"],
+      "layers": ["center"],
+      "orientationMode": "invariant",
+      "scaleMode": "none",
+      "slotMode": "anywhereInLayer",
+      "slots": [],
+      "semantics": { "element": "anchor" },
+      "notes": "PLACEHOLDER sigil. Replace with your real central sigil. A sigil names what the expression is about; it sits in the centre layer."
+    },
+    "sigil.beacon": {
+      "name": "beacon",
+      "class": "sigil",
+      "templates": ["beacon"],
+      "layers": ["center"],
+      "orientationMode": "invariant",
+      "scaleMode": "none",
+      "slotMode": "anywhereInLayer",
+      "slots": [],
+      "semantics": { "element": "beacon" },
+      "notes": "PLACEHOLDER second sigil so you can test choosing between two central sigils. Replace or delete."
+    },
+    "sign.push": {
+      "name": "push",
+      "class": "sign",
+      "templates": ["push"],
+      "layers": ["middle", "outer"],
+      "orientationMode": "semantic",
+      "scaleMode": "degree",
+      "slotMode": "named",
+      "slots": ["N", "E", "S", "W"],
+      "semantics": { "affects": "direction" },
+      "notes": "PLACEHOLDER sign. Orientation is read intrinsically: angle 0 = pointing at the ring centre, 90 = along the ring. Flip-ambiguous shapes render both readings until you declare chirality."
+    },
+    "sign.carry": {
+      "name": "carry",
+      "class": "sign",
+      "templates": ["carry"],
+      "layers": ["middle", "outer"],
+      "orientationMode": "semantic",
+      "scaleMode": "degree",
+      "slotMode": "named",
+      "slots": ["NE", "SE", "SW", "NW"],
+      "semantics": { "affects": "flow" },
+      "notes": "PLACEHOLDER sign occupying the diagonal sectors, so you can test slot assignment against push. Replace with your real language."
+    }
+  }
+}

@@ -1,0 +1,228 @@
+/* Glyph Lab — one small stylesheet, tuned for a tablet first.
+   Plain CSS, no frameworks. */
+
+:root {
+  --ink: #1a1a1a;
+  --paper: #fdfcf8;
+  --accent: #7a4d1f;
+  --accent-soft: #b98a55;
+  --panel: #f3efe6;
+  --line: #d8d0bf;
+  --good: #2e7d32;
+  --bad: #c62828;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;           /* the page never scrolls while drawing */
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* ---------- header ---------- */
+#topbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+#topbar h1 {
+  font-size: 19px;
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+}
+#modeSelect {
+  font: inherit;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 4px;
+}
+#palmWrap {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+}
+button {
+  font: inherit;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+button.tiny { padding: 2px 7px; font-size: 12px; }
+button:active { transform: translateY(1px); }
+
+/* ---------- canvas ---------- */
+#canvasWrap { position: relative; height: calc(100% - 52px); }
+#ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;         /* the brief's rule 3: never scroll/zoom */
+  background: var(--paper);
+  cursor: crosshair;
+}
+.overlay { position: absolute; inset: 0; pointer-events: none; }
+
+#pageGuides { border: 1px dashed #00000012; }
+
+/* badge: quick feedback ("glyph saved", "unknown") */
+.badge {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  background: #000000c9;
+  color: #fff;
+  font-size: 14px;
+  padding: 5px 12px;
+  border-radius: 14px;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.badge.hidden { opacity: 0; }
+
+/* intent echo: the compiler's plain-English sentence */
+.echo {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: 70%;
+  background: #fdfcf8ee;
+  border: 1px solid var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+.echo .echo-word { color: var(--accent); font-weight: bold; }
+.echo .echo-warn { color: var(--bad); }
+
+/* debug panel */
+.debug {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 12px;
+  font-family: ui-monospace, Menlo, monospace;
+  background: #fdfcf8d9;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  line-height: 1.6;
+  pointer-events: auto;
+}
+.debug-row.dbg-actions { display: flex; gap: 5px; margin-top: 3px; }
+
+/* ---------- bottom panel ---------- */
+.panel {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  max-height: 42%;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  padding: 10px 14px 14px;
+  z-index: 5;
+}
+.mode-panel p.hint { margin: 2px 0 8px; font-size: 14px; color: #555; }
+#canvasWrap.panel-open { height: auto; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.inline { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+input[type="text"], input[type="number"] {
+  font: inherit;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+}
+#teachName { width: 220px; }
+
+.glyphlog, .templatelist, .benchresults {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.thumbcard {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 6px;
+  font-size: 12px;
+  text-align: center;
+  min-width: 96px;
+}
+.thumbcard canvas { display: block; margin: 0 auto 4px; background: #fff; }
+.thumbcard .meta { color: #666; }
+.thumbcard .delete { margin-top: 4px; font-size: 11px; padding: 2px 8px; }
+
+.benchstatus { font-size: 14px; margin-top: 8px; color: #444; }
+
+/* confusion matrix */
+.matrix { border-collapse: collapse; font-size: 12px; background: #fff; }
+.matrix th, .matrix td {
+  border: 1px solid var(--line);
+  padding: 4px 7px;
+  text-align: center;
+  min-width: 44px;
+}
+.matrix th { background: var(--panel); font-weight: normal; }
+.matrix td.diag { background: #2e7d3222; }
+.matrix td.off { background: #c6282822; cursor: pointer; }
+.matrix td.zero { color: #bbb; }
+
+/* AST / IR viewer */
+pre.astview {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 10px;
+  overflow: auto;
+  max-height: 260px;
+  white-space: pre-wrap;
+}
+
+/* ---------- modal ---------- */
+.modal {
+  position: fixed; inset: 0;
+  background: #00000055;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+}
+.modal.hidden { display: none; }
+.modal-card {
+  background: var(--paper);
+  border: 1px solid var(--accent-soft);
+  border-radius: 8px;
+  padding: 18px 22px;
+  max-width: min(640px, 92vw);
+  max-height: 84vh;
+  overflow-y: auto;
+}
+.modal-card h2 { font-size: 18px; margin-top: 0; font-weight: normal; }
+
+.hidden { display: none !important; }
