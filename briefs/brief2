@@ -1,0 +1,50 @@
+# Task 2: $P recogniser and template teaching
+
+## Goal
+Teach the app named glyphs by drawing examples, then have it recognise
+new drawings and show how confident it is.
+
+## Recogniser (recogniser.js)
+Implement the $P point-cloud recogniser (Vatavu, Anthony & Wobbrock,
+2012, "Gestures as Point Clouds"). Follow the published algorithm:
+- Resample each glyph to N = 32 points (named constant).
+- Scale uniformly to a unit box, preserving aspect ratio.
+- Translate so the centroid is at the origin.
+- Greedy cloud matching with the standard epsilon of 0.5.
+- Stroke order and stroke direction must NOT affect the result.
+
+Export a function:
+  recognise(glyph, templates) → ranked list of
+    { name, distance, score }   // best first, score 0–1, higher = better
+
+Also export:
+  classify(glyph, templates, options) → { name | "unknown", ranked }
+Return "unknown" if EITHER:
+- the best distance is above a rejection threshold, OR
+- the gap between first and second place is below a margin threshold.
+Both thresholds are named constants passed in via options.
+
+## App modes (app.js)
+Add a mode switch with two modes:
+
+TEACH mode
+- A text field for a glyph name and the drawing canvas.
+- Each finished glyph is added as a sample to that named template.
+- Show a list of templates with sample counts and a small thumbnail
+  of each sample. Let me delete individual samples.
+
+RECOGNISE mode
+- Each finished glyph is classified.
+- Show: the result (or "unknown"), and the top 3 matches with scores.
+- Show the two threshold values with sliders so I can tune them live.
+
+## Out of scope
+Templates don't need to survive a page reload yet (next task).
+
+## Acceptance checks
+- I teach "circle" and "cross" with 3 samples each; drawing either
+  in RECOGNISE mode picks the right one.
+- A circle drawn clockwise and one drawn anticlockwise both match.
+- Scribbling nonsense returns "unknown" at sensible slider settings.
+- recogniser.js contains no references to document, window, canvas
+  or any browser API.
