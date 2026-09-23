@@ -1,0 +1,56 @@
+{
+  "grammarVersion": 1,
+  "plane": "flat",
+  "groupingTimeoutMs": 500,
+
+  "bands": {
+    "centerMax": 0.35,
+    "middleMax": 0.7,
+    "outerMax": 1.0,
+    "outsideMin": 1.05
+  },
+
+  "ring": {
+    "maxGapDeg": 40,
+    "maxRoundness": 0.18,
+    "minRadiusPx": 40
+  },
+
+  "sectors": [
+    { "name": "N",  "centerDeg": -90 },
+    { "name": "NE", "centerDeg": -45 },
+    { "name": "E",  "centerDeg": 0 },
+    { "name": "SE", "centerDeg": 45 },
+    { "name": "S",  "centerDeg": 90 },
+    { "name": "SW", "centerDeg": 135 },
+    { "name": "W",  "centerDeg": 180 },
+    { "name": "NW", "centerDeg": -135 }
+  ],
+  "sectorSpanDeg": 45,
+
+  "frame": {
+    "mode": "sigilAxis",
+    "options": ["sigilAxis", "ringOpening", "page"],
+    "fallback": "anywhereInLayer",
+    "note": "Names N/NE/E/... are provisional labels. What fixes the compass (which way N points) is deferred; see plan section 4.3."
+  },
+
+  "defaultSlots": ["N", "E", "S", "W"],
+
+  "cardinality": {
+    "maxRings": 1,
+    "minSigils": 1,
+    "maxSigils": 1,
+    "maxSigns": 8
+  },
+
+  "channels": ["shape", "layer", "sector", "size", "orientation", "multiplicity"],
+
+  "degreeBuckets": [
+    { "max": 0.10, "word": "faint" },
+    { "max": 0.18, "word": "light" },
+    { "max": 0.30, "word": "steady" },
+    { "max": 0.45, "word": "strong" },
+    { "max": 99,   "word": "overwhelming" }
+  ]
+}
