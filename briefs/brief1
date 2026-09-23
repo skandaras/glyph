@@ -1,0 +1,35 @@
+# Task 1: Drawing surface and stroke capture
+
+## Goal
+A full-screen canvas I can draw on that records every stroke as data
+and groups strokes into glyphs.
+
+## Requirements
+1. Full-screen canvas that stays sharp on high-resolution screens
+   (scale for devicePixelRatio).
+2. Use Pointer Events (pointerdown / pointermove / pointerup). Use
+   setPointerCapture so strokes don't break if the pen slides off an
+   element. Use getCoalescedEvents where available for smoother lines.
+3. Set `touch-action: none` on the canvas so drawing never scrolls or
+   zooms the page.
+4. Record each stroke as a list of Points (x, y, t, pressure).
+5. Palm rejection: once a pen input has been seen, ignore touch input
+   until the page reloads. Add a small toggle to turn this off.
+6. Glyph grouping: when the pen lifts and no new stroke starts within
+   500 ms, the current strokes become one finished Glyph. Make the
+   500 ms a single named constant I can change.
+7. When a glyph finishes, briefly fade its ink to grey so I can see
+   the grouping happened.
+8. A small debug panel showing: stroke count, point count of the last
+   stroke, and the number of finished glyphs.
+9. A "Clear" button.
+
+## Out of scope
+No recognition, no saving, no templates yet.
+
+## Acceptance checks
+- I can draw smoothly on my tablet with no lag or page scrolling.
+- Resting my palm while using the pencil doesn't draw.
+- Drawing an X (two strokes) quickly produces ONE glyph with 2 strokes.
+- Drawing two marks with a pause between produces TWO glyphs.
+- Lines look crisp, not blurry.
