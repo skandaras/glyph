@@ -228,6 +228,36 @@ console.log("symmetric sigil: frame falls back, nothing breaks");
   check("push slot is null when unanchored", pushArg.slot === null && pushArg.orientation === "inward");
 }
 
+console.log("intent renderer + device wire payload (task 10)");
+{
+  const ir = { op: "beacon", name: "beacon", degree: null, args: [
+    { name: "push", orientation: "inward", degree: "soft", slot: "E" }
+  ] };
+  check("renderIntent renders the echo sentence",
+    C.renderIntent(ir) === "beacon — push inward, soft, in E");
+
+  const page = [ringStroke(0, true), beaconAt(2000), ...pushAt(4000, 455, 495)];
+  const ast = P.parsePage(page, templates, templateInfo, grammar);
+  const out = C.compileAst(ast, lexicon, grammar);
+  const payload = C.buildWirePayload(page, ast, out);
+  check("wire payload is version 2", payload.version === 2);
+  check("wire carries the GlyphAST and GlyphIR",
+    payload.ast && payload.ir && Array.isArray(payload.ast.candidates));
+  check("wire carries the ring measurement",
+    payload.ring && near(payload.ring.radius, RING_R, 2));
+  check("wire strokes are integers on the 1000 grid",
+    payload.strokes.length === page.length &&
+    payload.strokes.every(s => s.length > 0 && s.every(p =>
+      Number.isInteger(p.x) && Number.isInteger(p.y) &&
+      p.x >= 0 && p.x <= 1000 && p.y >= 0 && p.y <= 1000)));
+  check("a phone could recompile from the file alone",
+    payload.compile && typeof payload.compile.ok === "boolean" &&
+    payload.ast.candidates.length >= 2 && payload.ir.op);
+  const bytes = JSON.stringify(payload).length;
+  console.log("       payload size: " + bytes + " bytes");
+  check("payload inside the 15KB budget", bytes > 0 && bytes <= 15000);
+}
+
 if (failures === 0) {
   console.log("ALL TESTS PASSED");
 } else {

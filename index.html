@@ -49,7 +49,7 @@
 <section id="panel" class="panel">
 
   <!-- DRAW -->
-  <div id="panel-draw" class="mode-panel">
+  <div id="panelDraw" class="mode-panel">
     <p class="hint">Draw ring + sigil + signs. Parse reads the whole page
        as one expression; Clear starts a new page.</p>
     <div class="btnrow">
@@ -60,7 +60,7 @@
   </div>
 
   <!-- TEACH -->
-  <div id="panel-teach" class="mode-panel hidden">
+  <div id="panelTeach" class="mode-panel hidden">
     <p class="hint">Type a template name, draw a sample, it is saved
        automatically. Templates below must match names used in
        data/lexicon.json.</p>
@@ -73,7 +73,7 @@
   </div>
 
   <!-- BENCH -->
-  <div id="panel-bench" class="mode-panel hidden">
+  <div id="panelBench" class="mode-panel hidden">
     <p class="hint">Drill: the app names a glyph, you draw it from memory.
        Leave-one-out: an instant accuracy reading from your saved samples.</p>
     <div class="btnrow">
@@ -82,6 +82,11 @@
       </label>
       <button id="btnDrill">Start drill</button>
       <button id="btnLoo">Leave-one-out</button>
+      <button id="btnExprDrill">Expression drill</button>
+    </div>
+    <div id="exprCtl" class="btnrow hidden">
+      <button id="btnExprRead">Read expression</button>
+      <button id="btnExprSkip" class="ghost">Skip</button>
     </div>
     <div id="benchStatus" class="benchstatus">no run yet</div>
     <div id="benchResults" class="benchresults"></div>

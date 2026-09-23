@@ -20,7 +20,8 @@ use a technical term, define it briefly the first time.
     spatial channel measurement)
   - lexicon.js — loads and validates data/lexicon.json + data/grammar.json
   - parser.js — turns a page of strokes into a GlyphAST (pure)
-  - compiler.js — turns a GlyphAST into a GlyphIR + plain-English echo (pure)
+  - compiler.js — turns a GlyphAST into a GlyphIR + plain-English echo (pure);
+    also renders the intent sentence and builds the v2 device wire payload
   - data/lexicon.json — what each glyph MEANS; hand-edited by me
   - data/grammar.json — the sentence rules and tunable constants; hand-edited by me
 - recogniser.js, lexicon.js, parser.js and compiler.js must contain pure
@@ -45,7 +46,7 @@ use a technical term, define it briefly the first time.
   strokeCount }
 - GlyphAST: what the parser believes is on the page: { ringState, ring,
   frame, candidates, unknowns, warnings, unsupported }
-- GlyphIR: what a valid expression DOES: { op, args, degree, mode, state }
+- GlyphIR: what a valid expression DOES: { op, name, args, degree, mode, state }
 
 ## Working style
 - Do one task at a time. Don't add features I haven't asked for.

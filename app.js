@@ -22,6 +22,7 @@ const lexiconModule = globalThis.loadLexiconData ? globalThis : null;
 const parserModule = globalThis.parsePage ? globalThis : null;
 const compilerModule = globalThis.compileAst ? globalThis : null;
 const recogniserModule = globalThis.classify ? globalThis : null;
+const C_ = compilerModule; // short alias, used all over app.js
 
 /* ---------------- state ---------------- */
 const GROUP_TIMEOUT_FALLBACK_MS = 500; // used until grammar.json loads
@@ -42,7 +43,8 @@ const state = {
   groupingTimer: null,
   penSeen: false,       // palm-rejection latch
   results: null,        // last bench results {kind, trials}
-  drill: null           // active drill session
+  drill: null,          // active drill session (kind: "glyph" | "expression")
+  lastParse: null       // { page, ast, compiled } — kept for the wire export
 };
 
 /* ---------------- tiny DOM helpers ---------------- */
@@ -52,6 +54,7 @@ const els = {};
  "dbgGlyphs","dbgTempl","dbgUnknowns","btnParse","btnAst","badge","echoBox",
  "panel","panelDraw","panelTeach","panelBench","btnClear","btnUndo","glyphLog",
  "teachName","btnTeachUndo","templateList","repsPerGlyph","btnDrill","btnLoo",
+ "btnExprDrill","exprCtl","btnExprRead","btnExprSkip",
  "benchStatus","benchResults","modal","modalTitle","modalBody","modalButtons"]
  .forEach(id => { els[id] = $(id); });
 
@@ -216,8 +219,9 @@ function finishPendingGlyph() {
       badge("sample saved to '" + name + "'");
       renderTemplates();
     }
-  } else if (state.mode === "bench") {
-    handleDrillGlyph(glyph);
+  } else if (state.mode === "bench" && state.drill) {
+    if (state.drill.kind === "expression") handleExpressionGlyph(glyph);
+    else handleDrillGlyph(glyph);
   }
 
   logGlyph(glyph);
@@ -271,7 +275,10 @@ function runParse() {
   els.echoBox.textContent = out.echo;
   show(els.echoBox);
   updateDebug(ast);
-  return { ast, out };
+  // task 10: keep the page with its reading so Export expression
+  // can build the device payload without re-parsing.
+  state.lastParse = { page: state.page.slice(), ast, compiled: out };
+  return state.lastParse;
 }
 
 /* ---------------- debug panel ---------------- */
@@ -372,8 +379,108 @@ function startDrill() {
   const reps = Math.max(1, parseInt(els.repsPerGlyph.value, 10) || 10);
   const queue = [];
   for (const n of names) for (let i = 0; i < reps; i++) queue.push(n);
-  state.drill = { queue: shuffle(queue), index: 0, results: [] };
+  state.drill = { kind: "glyph", queue: shuffle(queue), index: 0, results: [] };
   showDrillPrompt();
+}
+
+/* ---- expression drill (task 9) ---------------------------------
+   The bench names a whole expression in plain English (the same
+   sentence the compiler echoes); you draw it — ring, sigil, signs —
+   from memory. Read shows the compiled echo; Skip moves on. Trials
+   record target vs reading at lexeme and sector level: the sector
+   drift and axis-consistency data the plan defers decisions to. */
+function startExpressionDrill() {
+  if (!state.load || !state.load.ok) {
+    badge("lexicon/grammar not loaded — drill disabled");
+    return;
+  }
+  const sigils = Object.keys(state.templateInfo).filter(n =>
+    state.templateInfo[n].class === "sigil");
+  const signs = Object.keys(state.templateInfo).filter(n =>
+    state.templateInfo[n].class === "sign");
+  if (sigils.length === 0 || signs.length === 0) {
+    badge("teach a sigil and at least one sign first");
+    return;
+  }
+  const reps = Math.max(1, parseInt(els.repsPerGlyph.value, 10) || 10);
+  const queue = [];
+  for (let i = 0; i < reps; i++) {
+    const sigil = sigils[Math.floor(Math.random() * sigils.length)];
+    const nSigns = 1 + Math.floor(Math.random() * 2); // 1 or 2 signs
+    const chosen = shuffle(signs).slice(0, Math.min(nSigns, signs.length));
+    const slots = (state.grammar.defaultSlots || ["N", "NE", "E", "SE"])
+      .slice();
+    const args = [];
+    let slotBag = shuffle(slots);
+    for (const s of chosen) {
+      if (slotBag.length === 0) slotBag = shuffle(slots);
+      args.push({ sign: s, slot: slotBag.pop() });
+    }
+    queue.push({ sigil, args });
+  }
+  state.drill = { kind: "expression", queue, index: 0, results: [] };
+  clearPage();
+  showExpressionPrompt();
+}
+
+function drillTargetIntent(d) {
+  const item = d.queue[d.index];
+  return {
+    op: item.sigil, name: item.sigil,
+    args: item.args.map(a => ({ name: a.sign, slot: a.slot }))
+  };
+}
+
+function showExpressionPrompt() {
+  const d = state.drill;
+  if (!d || d.index >= d.queue.length) { finishDrill(); return; }
+  const ir = drillTargetIntent(d);
+  els.benchStatus.innerHTML =
+    "draw <strong>" + C_.renderIntent(ir) + "</strong> (" +
+    (d.index + 1) + " of " + d.queue.length + ")";
+  show(els.exprCtl);
+}
+
+function handleExpressionGlyph() { /* judging waits for Read */ }
+
+function handleExpressionRead() {
+  const d = state.drill;
+  if (!d) return;
+  if (state.page.length === 0) { badge("nothing on the page"); return; }
+  const parsed = runParse();
+  const item = d.queue[d.index];
+  const target = drillTargetIntent(d);
+  const gotSigil = parsed.ast.candidates.find(c =>
+    c.glyphClass === "sigil" && c.layer === "center");
+  const signCands = parsed.ast.candidates.filter(c => c.glyphClass === "sign");
+  d.results.push({
+    kind: "expression",
+    target, when: Date.now(),
+    targetSigil: item.sigil,
+    readSigil: gotSigil ? gotSigil.name : null,   // template name, like the target
+    targetSigns: item.args,
+    readSigns: signCands.map(c => ({
+      sign: c.name, slot: c.sector
+    })),
+    compileOk: parsed.compiled.ok,
+    parseFailures: parsed.compiled.errors,
+    echo: parsed.compiled.echo
+  });
+  d.index += 1;
+  saveData();
+  showExpressionPrompt();
+}
+
+function handleExpressionSkip() {
+  const d = state.drill;
+  if (!d) return;
+  d.results.push({
+    kind: "expression", when: Date.now(), skipped: true,
+    target: drillTargetIntent(d)
+  });
+  d.index += 1;
+  clearPage();
+  showExpressionPrompt();
 }
 
 function showDrillPrompt() {
@@ -400,8 +507,13 @@ function handleDrillGlyph(glyph) {
 }
 
 function finishDrill() {
-  state.results = { kind: "drill", trials: state.drill.results };
+  const d = state.drill;
+  state.results = d
+    ? { kind: d.kind === "expression" ? "expression-drill" : "drill",
+        trials: d.results }
+    : { kind: "drill", trials: [] };
   state.drill = null;
+  hide(els.exprCtl);
   els.benchStatus.textContent = "drill done";
   renderResults();
 }
@@ -439,6 +551,7 @@ function renderResults() {
     wrap.appendChild(document.createTextNode("no results"));
     return;
   }
+  if (res.kind === "expression-drill") { renderExpressionResults(res); return; }
   const right = res.trials.filter(t => t.predicted === t.target).length;
   const head = document.createElement("p");
   head.innerHTML = "<strong>" + res.kind + "</strong>: " +
@@ -502,6 +615,76 @@ function renderResults() {
   function th(t) {
     const x = document.createElement("th"); x.textContent = t; return x;
   }
+}
+
+/* Results for the expression drill: lexeme hits and misses, sector
+   drift (drawn at NE, read at E) and the parse-failure breakdown
+   the plan's task 9 asks for. */
+function renderExpressionResults(res) {
+  const done = res.trials.filter(t => !t.skipped);
+  const wrap = els.benchResults;
+  if (done.length === 0) {
+    wrap.appendChild(document.createTextNode("nothing attempted"));
+    return;
+  }
+  let sigHits = 0, signHits = 0, signTotal = 0;
+  const drift = {};
+  const failKinds = {};
+  for (const t of done) {
+    if (t.readSigil === t.targetSigil) sigHits++;
+    else if (t.readSigil) {
+      const k = t.targetSigil + "→" + t.readSigil;
+      drift[k] = (drift[k] || 0) + 1;
+    }
+    const readBySign = {};
+    for (const r of (t.readSigns || [])) {
+      readBySign[r.sign] = readBySign[r.sign] || [];
+      readBySign[r.sign].push(r.slot);
+    }
+    for (const want of (t.targetSigns || [])) {
+      signTotal++;
+      const got = readBySign[want.sign];
+      if (got && got.indexOf(want.slot) !== -1) {
+        signHits++;
+      } else if (got) {
+        for (const s of got) {
+          const k = want.sign + " " + want.slot + "→" + s;
+          drift[k] = (drift[k] || 0) + 1;
+        }
+      }
+    }
+    for (const e of (t.parseFailures || [])) {
+      failKinds[e] = (failKinds[e] || 0) + 1;
+    }
+  }
+  const head = document.createElement("p");
+  head.innerHTML = "<strong>expression drill</strong>: sigils " +
+    sigHits + "/" + done.length + " · sign+slot " + signHits + "/" +
+    signTotal;
+  wrap.appendChild(head);
+  const parts = [];
+  for (const k of Object.keys(drift)) parts.push(k + " ×" + drift[k]);
+  if (parts.length > 0) {
+    const p = document.createElement("p");
+    p.innerHTML = "<strong>drift / confusion</strong><br>" + parts.join("<br>");
+    wrap.appendChild(p);
+  }
+  const fails = Object.keys(failKinds);
+  if (fails.length > 0) {
+    const p = document.createElement("p");
+    p.innerHTML = "<strong>parse failures</strong>";
+    wrap.appendChild(p);
+    for (const k of fails) {
+      const line = document.createElement("p");
+      line.textContent = k + " ×" + failKinds[k];
+      wrap.appendChild(line);
+    }
+  }
+  const list = document.createElement("p");
+  list.innerHTML = done.map(t =>
+    "<strong>" + C_.renderIntent(t.target) + "</strong> → " +
+    (t.echo || "(not read)").split("\n")[0]).join("<br>");
+  wrap.appendChild(list);
 }
 
 function showCell(target, predicted, trials) {
@@ -617,6 +800,31 @@ function afterImport() {
   badge("imported");
 }
 
+/* Export the last-parsed page in the device wire format (v2):
+   simplified, quantised strokes + GlyphAST + GlyphIR. This is the
+   shape the wrist device will send over Bluetooth; a phone-side
+   compiler could recompile the expression from this file alone. */
+function exportWire() {
+  if (!state.lastParse) {
+    badge("parse the page first, then export");
+    return;
+  }
+  const { page, ast, compiled } = state.lastParse;
+  const payload = C_.buildWirePayload(page, ast, compiled);
+  const text = JSON.stringify(payload);
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const name = "glyph-expression-" + d.getFullYear() + "-" +
+    pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "-" +
+    pad(d.getHours()) + pad(d.getMinutes()) + ".json";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  badge("exported " + name + " (" + Math.round(text.length / 1024 * 10) / 10 + " KB)");
+}
+
 /* ---------------- mode switching ---------------- */
 function setMode(mode) {
   state.mode = mode;
@@ -677,7 +885,10 @@ function showHelp() {
     "Template names must match those in data/lexicon.json.</p>" +
     "<p><strong>Bench</strong> — drill names a glyph, you draw it from memory; " +
     "leave-one-out scores your saved samples against themselves. " +
-    "Both produce a confusion matrix; tap a red cell to see the drawings.</p>" +
+    "Both produce a confusion matrix; tap a red cell to see the drawings. " +
+    "Expression drill names a whole sentence (ring, sigil, signs) — " +
+    "draw it, then Read expression; results show lexeme hits and " +
+    "sector drift.</p>" +
     "<p><strong>Files</strong> — everything is saved in this browser automatically. " +
     "Export/Import moves it between devices (buttons below).</p>" +
     "<p><strong>Expression shape (v1)</strong> — one ring, one central sigil, " +
@@ -707,6 +918,9 @@ function wire() {
   };
   els.btnDrill.onclick = startDrill;
   els.btnLoo.onclick = runLeaveOneOut;
+  els.btnExprDrill.onclick = startExpressionDrill;
+  els.btnExprRead.onclick = handleExpressionRead;
+  els.btnExprSkip.onclick = handleExpressionSkip;
   els.helpBtn.onclick = showHelp;
 
   // file export/import (brief 3)
@@ -716,13 +930,17 @@ function wire() {
   const exp = document.createElement("button");
   exp.className = "ghost"; exp.textContent = "Export";
   exp.onclick = exportData;
+  // task 10: the device wire format (v2)
+  const expv2 = document.createElement("button");
+  expv2.className = "ghost"; expv2.textContent = "Export expression (device)";
+  expv2.onclick = exportWire;
   const imp = document.createElement("button");
   imp.className = "ghost"; imp.textContent = "Import";
   const file = document.createElement("input");
   file.type = "file"; file.accept = "application/json"; file.className = "hidden";
   imp.onclick = () => file.click();
   file.onchange = () => { if (file.files[0]) importData(file.files[0]); file.value = ""; };
-  btnrow.append(exp, imp, file);
+  btnrow.append(exp, expv2, imp, file);
   els.panelDraw.appendChild(btnrow);
 }
 
