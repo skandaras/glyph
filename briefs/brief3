@@ -1,0 +1,25 @@
+# Task 3: Save, export and import
+
+## Goal
+Nothing I draw is ever lost, and I can move my data between devices.
+
+## Requirements
+1. Save all templates and samples to localStorage automatically after
+   every change. Load them on startup. Wrap all storage access in
+   try/catch so a storage failure shows a warning instead of crashing.
+2. "Export" button: downloads a JSON file named
+   glyphlab-YYYY-MM-DD-HHMM.json containing everything.
+3. "Import" button: loads a JSON file. Ask whether to MERGE with or
+   REPLACE current data.
+4. Include a `version: 1` field at the top of the saved format, so
+   the format can change later without breaking old files.
+5. Separately keep a log of every glyph drawn in any mode (with
+   timestamp and mode), included in the export. This is my raw
+   dataset for later.
+
+## Acceptance checks
+- Reloading the page keeps all my templates.
+- Exporting on my iPad and importing on my laptop gives identical
+  templates.
+- Importing a broken or unrelated JSON file shows a clear error and
+  changes nothing.
