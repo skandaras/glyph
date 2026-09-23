@@ -1,0 +1,38 @@
+# Task 4: Test bench
+
+## Goal
+Measure how reliably my alphabet is recognised and show exactly which
+glyphs get mistaken for which, so I know what to redesign.
+
+## Mode 1: Drill
+- I choose how many repetitions per glyph (default 10).
+- The app shows the NAME of a target glyph (not a picture, so I draw
+  from memory) in random order across all templates.
+- I draw it; the app records { target, predicted, score, timestamp }
+  and moves on without telling me if it was right (so I don't adjust
+  my drawing to please it).
+- At the end, show the results.
+
+## Mode 2: Leave-one-out
+- Without drawing anything, test every stored sample against all
+  templates with that one sample removed.
+- Gives an instant accuracy reading from existing data.
+
+## Results screen (shared by both modes)
+- Overall accuracy as a percentage.
+- A confusion matrix:
+  - rows = what I meant to draw
+  - columns = what the app read, plus an "unknown" column
+  - each cell shows a count and the row percentage
+  - diagonal cells tinted green, off-diagonal cells tinted red by
+    how large they are
+- Below it, a list of the worst 3 confusions in plain English, e.g.
+  "'spiral' was read as 'circle' 30% of the time".
+- Tapping any cell shows thumbnails of the drawings in that cell.
+- Drill results are saved and included in the export.
+
+## Acceptance checks
+- With 4 well-separated glyphs, leave-one-out shows mostly diagonal.
+- Deliberately teaching two similar glyphs (e.g. circle and oval)
+  shows up clearly as a red off-diagonal pair.
+- Tapping that red cell shows me the actual confused drawings.
